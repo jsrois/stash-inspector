@@ -91,8 +91,8 @@ class StashRequester
     http.request(req)
   end
 
-  def get_info
-    slugs = get_slugs.select {|s| s[:project_name][/^MM/]}
+  def get_info(filter)
+    slugs = get_slugs.select {|s| s[:project_name][/#{filter}/]}
     puts "Retrieving info from #{slugs.size} repositories"
     slugs.each do |slug|
 			puts "[#{slug[:name]}]"
@@ -172,17 +172,17 @@ end
 
 
 
-if ARGV[1]
-
-	stash_url = ARGV[1]
+if ARGV[0]
+	stash_url = ARGV[0]
+	puts
 	print "Username:"
-	user_name = gets.chomp
+	user_name = $stdin.gets.chomp
 	print "Pass:"
 	pass = STDIN.noecho(&:gets).chomp
 	puts
 
 	requester = StashRequester.new user_name, pass, stash_url
-	projects  = requester.get_info
+	projects  = requester.get_info ARGV[1]
 
 	serialize projects
 	
