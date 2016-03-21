@@ -1,0 +1,43 @@
+<html>
+<head>
+  <style>
+      table, th, td {
+          border: 1px solid black;
+          border-collapse: collapse;
+      }
+      th, td {
+          padding: 5px;
+      }
+      th {
+          text-align: left;
+      }
+      tr.oversized {
+          background-color: red;
+      }
+      tr.old {
+          color: darkgray;
+      }
+  </style>
+</head>
+<body>
+<% projects.each do |project| %>
+    <h2> <%= "Project #{project.name}"%></h2>
+    <table style="width:100%">
+      <tr>
+        <th>Repo</th>
+        <th>Size</th>
+        <th>README.md</th>
+        <th>Last update</th>
+      </tr>
+      <% project.repos.each do |repo| %>
+      <tr class="<%= 'oversized' if repo.oversized? && !repo.old? %> <%= 'old' if repo.old? %>">
+        <td><%= repo.name %></td>
+        <td><%= repo.human_readable_size %></td>
+        <td><%= repo.has[:readme] %> </td>
+        <td><%= repo.last_commit_date %></td>
+      </tr>
+      <% end %>
+    </table>
+<% end %>
+</body>
+</html>
