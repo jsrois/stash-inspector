@@ -11,7 +11,7 @@
       th {
           text-align: left;
       }
-      tr.oversized {
+      td.nonconf {
           background-color: red;
       }
       tr.old {
@@ -27,13 +27,19 @@
         <th>Repo</th>
         <th>Size</th>
         <th>README.md</th>
-        <th>Last update</th>
+        <th>LICENSE</th>
+        <th>AUTHORS</th>
+        <th>CONTRIBUTORS</th>
+        <th>Last update on master</th>
       </tr>
       <% project.repos.each do |repo| %>
-      <tr class="<%= 'oversized' if repo.oversized? && !repo.old? %> <%= 'old' if repo.old? %>">
+      <tr  class="<%= 'old' if repo.old? %>">
         <td><%= repo.name %></td>
-        <td><%= repo.human_readable_size %></td>
-        <td><%= repo.has[:readme] %> </td>
+        <td class="<%= 'nonconf' if repo.oversized? %>"><%= repo.human_readable_size %></td>
+        <td class="<%= 'nonconf' if !repo.has[:readme] %>"><%= repo.has[:readme] %> </td>
+        <td class="<%= 'nonconf' if !repo.has[:license] %>"><%= repo.has[:license] %> </td>
+        <td class="<%= 'nonconf' if !repo.has[:authors] %>"><%= repo.has[:authors] %> </td>
+        <td class="<%= 'nonconf' if !repo.has[:contributors] %>"><%= repo.has[:contributors] %> </td>
         <td><%= repo.last_commit_date %></td>
       </tr>
       <% end %>

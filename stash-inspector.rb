@@ -3,8 +3,7 @@ require 'uri'
 require 'net/https'
 require 'json'
 require 'date'
-require 'ruby-progressbar'
-require 'pp'
+
 
 BYTES_IN_MEGABYTE=1024*1024
 
@@ -22,12 +21,19 @@ class Repo
     @size = params[:size_in_megabytes]
     @human_readable_size = params[:human_readable_size]
     @has = Hash.new
-    @has[:readme] = params[:has_readme]
-    @last_commit_date = params[:last_commit_date]
+    @has[:readme]  			= params[:has_readme]
+    @has[:license] 			= params[:has_license]
+    @has[:authors] 			= params[:has_authors]
+    @has[:contributors] = params[:has_contributors]
+    @last_commit_date 	= params[:last_commit_date]
   end
 
   def oversized?
     @size > OVERSIZE_THRESHOLD
+  end
+  
+  def has_all_files?
+  	@has.values.all? {|e| e==true }
   end
 
   def old?
@@ -68,7 +74,7 @@ class StashRequester
     @user, @pass, @base_path = user, pass, base_path
     @uri = Hash.new
     @uri[:get_repos]        = "%{url}/rest/api/1.0/repos?limit=%{limit}"
-    @uri[:get_readme]       = "%{url}/rest/api/1.0/projects/%{project_key}/repos/%{name}/browse/README.md?type=true"
+    @uri[:get_file]       	= "%{url}/rest/api/1.0/projects/%{project_key}/repos/%{name}/browse/%{file}?type=true"
     @uri[:get_size]         = "%{url}/rest/reposize/latest/projects/%{project_key}/repos/%{name}"
     @uri[:get_last_commit]  = "%{url}/rest/api/1.0/projects/%{project_key}/repos/%{name}/commits?limit=1"
   end
@@ -86,20 +92,21 @@ class StashRequester
   end
 
   def get_info
-    slugs = get_slugs
-
+    slugs = get_slugs.select {|s| s[:project_name][/^MM/]}
     puts "Retrieving info from #{slugs.size} repositories"
-    progress_bar = ProgressBar.create(
-        :format         => '%a %bᗧ%i %p%% %t',
-        :progress_mark  => ' ',
-        :remainder_mark => '･',
-        :starting_at    => 0)
-    progress_bar.total=slugs.size
     slugs.each do |slug|
-      progress_bar.increment
+			puts "[#{slug[:name]}]"
       #1. get repo info (files)
-      response = make_request_to @uri[:get_readme], slug
+      response = make_request_to @uri[:get_file], slug.merge({file: 'README.md'})
       slug[:has_readme] = JSON.parse(response.body).has_key? "type"
+      response = make_request_to @uri[:get_file], slug.merge({file: 'LICENSE'})
+      slug[:has_license] = JSON.parse(response.body).has_key? "type"
+      response = make_request_to @uri[:get_file], slug.merge({file: 'AUTHORS'})
+      slug[:has_authors] = JSON.parse(response.body).has_key? "type"
+      response = make_request_to @uri[:get_file], slug.merge({file: 'CONTRIBUTORS'})
+      slug[:has_contributors] = JSON.parse(response.body).has_key? "type"
+
+
 
       #2. get repo size (this works only if the 'reposize' plugin is installed)
       response = make_request_to @uri[:get_size], slug
@@ -166,9 +173,9 @@ end
 
 stash_url='https://193.146.211.53:3042/stash'#'https://intranet.gradiant.org/stash'
 print "Username:"
-user_name = gets
+user_name = gets.chomp
 print "Pass:"
-pass = STDIN.noecho(&:gets)
+pass = STDIN.noecho(&:gets).chomp
 puts
 
 requester = StashRequester.new user_name, pass, stash_url
