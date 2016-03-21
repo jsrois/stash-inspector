@@ -171,15 +171,20 @@ def serialize(projects)
 end
 
 
-stash_url='https://193.146.211.53:3042/stash'#'https://intranet.gradiant.org/stash'
-print "Username:"
-user_name = gets.chomp
-print "Pass:"
-pass = STDIN.noecho(&:gets).chomp
-puts
 
-requester = StashRequester.new user_name, pass, stash_url
-projects  = requester.get_info
+if ARGV[1]
 
-serialize projects
+	stash_url = ARGV[1]
+	print "Username:"
+	user_name = gets.chomp
+	print "Pass:"
+	pass = STDIN.noecho(&:gets).chomp
+	puts
+
+	requester = StashRequester.new user_name, pass, stash_url
+	projects  = requester.get_info
+
+	serialize projects
+	
+end
 
